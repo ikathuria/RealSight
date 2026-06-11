@@ -75,7 +75,7 @@ RealSight/
 | 1. Scaffold | ✅ done | Backend boots, /healthz 200; extension loads unpacked (user-verified) |
 | 2. Detection agent backend | ✅ done, verified live | End-to-end confirmed in real browsing: real video → likely_real 95%, AI video → ai_generated 75% **with MongoDB cache hit shown** |
 | 3. YouTube extension flow | ✅ done, verified live | Badge + popup confirmed on watch pages (user screenshots); Shorts support added (active-reel video/container targeting) — Shorts pending a live check |
-| 4. Cloud Run deploy | ☐ todo | |
+| 4. Cloud Run deploy | 🔄 deployed, URL propagating | Service `realsight-backend` live on project `gen-lang-client-0302346734` (us-central1), env vars set by user (rev 00002); run.app URL still returning edge 404 — waiting on propagation. Extension points at prod URL. |
 | 5. Instagram Reels (stretch) | ✅ done (code) | IntersectionObserver (0.5) + MutationObserver on Reel videos, shared capture, `/reels/<id>/` cache key; **needs live check — esp. that blob: video doesn't taint canvas**; if it fails, demo YouTube-only |
 | 6. Devpost submission | ☐ todo | HARD STOP 2:00 PM PDT today |
 | 7. Polish (post-hackathon) | ☐ todo | |
