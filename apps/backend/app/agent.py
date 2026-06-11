@@ -26,7 +26,9 @@ from mcp import StdioServerParameters
 logger = logging.getLogger("realsight.agent")
 
 APP_NAME = "realsight"
-MODEL = os.environ.get("REALSIGHT_MODEL", "gemini-flash-latest")
+# Pinned: gemini-flash-latest and gemini-3.5-flash returned 503 high-demand on
+# 2026-06-11 (hackathon day); 2.5-flash is GA and responsive.
+MODEL = os.environ.get("REALSIGHT_MODEL", "gemini-2.5-flash")
 DB_NAME = "realsight"
 COLLECTION = "detections"
 
@@ -151,8 +153,26 @@ def _parse_verdict(text: str) -> dict:
     }
 
 
+async def _run_once(runner: InMemoryRunner, parts: list) -> str:
+    session = await runner.session_service.create_session(app_name=APP_NAME, user_id="extension")
+    final_text = ""
+    async for event in runner.run_async(
+        user_id="extension",
+        session_id=session.id,
+        new_message=types.Content(role="user", parts=parts),
+    ):
+        if event.is_final_response() and event.content and event.content.parts:
+            final_text = "".join(p.text or "" for p in event.content.parts)
+    return final_text
+
+
 async def run_detection(runner: InMemoryRunner, url: str, frames_b64: list[str]) -> dict:
-    """Run one detection through the agent. Returns verdict dict (see schemas)."""
+    """Run one detection through the agent. Returns verdict dict (see schemas).
+
+    Retries on Gemini 503 UNAVAILABLE bursts (frequent on the free tier).
+    """
+    import asyncio
+
     normalized = normalize_url(url)
 
     parts = [
@@ -164,16 +184,17 @@ async def run_detection(runner: InMemoryRunner, url: str, frames_b64: list[str])
     for frame in frames_b64:
         parts.append(types.Part.from_bytes(data=_decode_frame(frame), mime_type="image/jpeg"))
 
-    session = await runner.session_service.create_session(app_name=APP_NAME, user_id="extension")
-
-    final_text = ""
-    async for event in runner.run_async(
-        user_id="extension",
-        session_id=session.id,
-        new_message=types.Content(role="user", parts=parts),
-    ):
-        if event.is_final_response() and event.content and event.content.parts:
-            final_text = "".join(p.text or "" for p in event.content.parts)
-
-    logger.info("agent response for %s: %s", normalized, final_text[:500])
-    return _parse_verdict(final_text)
+    last_error: Exception | None = None
+    for attempt, delay in enumerate((0, 3, 8), start=1):
+        if delay:
+            await asyncio.sleep(delay)
+        try:
+            final_text = await _run_once(runner, parts)
+            logger.info("agent response for %s: %s", normalized, final_text[:500])
+            return _parse_verdict(final_text)
+        except Exception as err:
+            if "503" not in str(err) and "UNAVAILABLE" not in str(err):
+                raise
+            logger.warning("Gemini 503 (attempt %d/3) for %s", attempt, normalized)
+            last_error = err
+    raise last_error

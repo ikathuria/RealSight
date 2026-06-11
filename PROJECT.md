@@ -72,22 +72,23 @@ RealSight/
 
 | Milestone | Status | Notes |
 |---|---|---|
-| 1. Scaffold | ✅ done (code) | Backend boots, /healthz 200; extension scaffold written (load-unpacked check pending user); **USER ACTIONS still open: Atlas connection string + Gemini API key → `apps/backend/.env`** |
-| 2. Detection agent backend | ✅ done (code, untested) | agent.py + /analyze written against verified ADK 2.2.0 API; live test blocked on .env keys — run `apps/backend/smoke_test.py` once keys exist |
-| 3. YouTube extension flow | ☐ todo | |
+| 1. Scaffold | ✅ done | Backend boots, /healthz 200; extension loads unpacked (user-verified) |
+| 2. Detection agent backend | ✅ done, verified live | End-to-end confirmed in real browsing: real video → likely_real 95%, AI video → ai_generated 75% **with MongoDB cache hit shown** |
+| 3. YouTube extension flow | ✅ done, verified live | Badge + popup confirmed on watch pages (user screenshots); Shorts support added (active-reel video/container targeting) — Shorts pending a live check |
 | 4. Cloud Run deploy | ☐ todo | |
 | 5. Instagram Reels (stretch) | ☐ todo | cut first if out of time |
 | 6. Devpost submission | ☐ todo | HARD STOP 2:00 PM PDT today |
 | 7. Polish (post-hackathon) | ☐ todo | |
 
-**In progress now:** waiting on USER ACTIONS (Atlas M0 connection string + Gemini API key in `apps/backend/.env`), then run `smoke_test.py` to verify M2 end-to-end
-**Next up:** Milestone 3 (YouTube extension flow)
+**In progress now:** Milestones 1–3 done and verified live (keys configured in `apps/backend/.env`)
+**Next up:** Milestone 4 (Cloud Run deploy), then Devpost submission prep (M6 hard stop 2:00 PM PDT)
 
 ### Build notes (2026-06-11)
 - **ADK 2.x API drift vs docs:** `McpToolset` imports from `google.adk.tools` (not `google.adk.tools.mcp_tool` as adk.dev shows); the `mcp` pip package is NOT pulled in by `google-adk` — it's a separate requirement. Both fixed in requirements.txt/agent.py against installed google-adk 2.2.0.
 - **Windows npx:** stdio MCP spawn resolves `npx` via `shutil.which` (bare `npx` fails on Windows — it's `npx.cmd`).
 - **MCP fallback decision (PLAN M2):** full-MCP path implemented (agent does both `find` and `insert-many`); pymongo direct-write fallback NOT yet needed — revisit only if live testing shows flakiness.
 - Installed versions: fastapi 0.136.3, google-adk 2.2.0, uvicorn 0.49.0.
+- **Gemini 503 high-demand bursts (2026-06-11):** `gemini-flash-latest` and `gemini-3.5-flash` were intermittently 503-overloaded; pinned **`gemini-2.5-flash`** (GA, responsive — override via `REALSIGHT_MODEL`) and added 3-attempt backoff (0/3/8s) on 503 in `run_detection`. Protects the live demo.
 
 ---
 
