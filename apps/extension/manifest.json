@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "RealSight",
+  "version": "0.1.0",
+  "description": "Passively detects AI-generated video on YouTube and Instagram Reels while you browse.",
+  "permissions": ["storage"],
+  "host_permissions": ["http://localhost:8000/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.youtube.com/*"],
+      "js": ["content/capture.js", "content/youtube.js"],
+      "css": ["content/badge.css"],
+      "run_at": "document_idle"
+    },
+    {
+      "matches": ["*://*.instagram.com/*"],
+      "js": ["content/capture.js", "content/instagram.js"],
+      "css": ["content/badge.css"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_popup": "popup/popup.html",
+    "default_title": "RealSight"
+  }
+}

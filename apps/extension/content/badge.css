@@ -1,0 +1,33 @@
+.realsight-badge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 2147483647;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  font: 600 13px/1.2 system-ui, -apple-system, sans-serif;
+  color: #fff;
+  background: rgba(60, 60, 60, 0.85);
+  backdrop-filter: blur(4px);
+  cursor: pointer;
+  user-select: none;
+}
+
+.realsight-badge--pending {
+  background: rgba(60, 60, 60, 0.85);
+}
+
+.realsight-badge--ai {
+  background: rgba(198, 40, 40, 0.92);
+}
+
+.realsight-badge--real {
+  background: rgba(46, 125, 50, 0.92);
+}
+
+.realsight-badge--uncertain {
+  background: rgba(120, 120, 120, 0.92);
+}
