@@ -76,7 +76,7 @@ RealSight/
 | 2. Detection agent backend | ✅ done, verified live | End-to-end confirmed in real browsing: real video → likely_real 95%, AI video → ai_generated 75% **with MongoDB cache hit shown** |
 | 3. YouTube extension flow | ✅ done, verified live | Badge + popup confirmed on watch pages (user screenshots); Shorts support added (active-reel video/container targeting) — Shorts pending a live check |
 | 4. Cloud Run deploy | ☐ todo | |
-| 5. Instagram Reels (stretch) | ☐ todo | cut first if out of time |
+| 5. Instagram Reels (stretch) | ✅ done (code) | IntersectionObserver (0.5) + MutationObserver on Reel videos, shared capture, `/reels/<id>/` cache key; **needs live check — esp. that blob: video doesn't taint canvas**; if it fails, demo YouTube-only |
 | 6. Devpost submission | ☐ todo | HARD STOP 2:00 PM PDT today |
 | 7. Polish (post-hackathon) | ☐ todo | |
 
