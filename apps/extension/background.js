@@ -66,8 +66,14 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ url: message.url, frames: message.frames }),
     })
-      .then((res) => res.json())
-      .then((result) => {
+      .then((res) => res.json().then((result) => ({ httpOk: res.ok, result })))
+      .then(({ httpOk, result }) => {
+        if (!httpOk || result.verdict === "error") {
+          lastResultByTab.set(tabId, { status: "error", url: message.url, result });
+          if (tabId != null) setIcon(tabId, "uncertain");
+          sendResponse({ ok: false, error: (result.reasons ?? []).join("; ") || "backend error" });
+          return;
+        }
         lastResultByTab.set(tabId, { status: "done", url: message.url, result });
         if (tabId != null) setIcon(tabId, VERDICT_ICON[result.verdict] ?? "uncertain");
         sendResponse({ ok: true, result });
