@@ -89,12 +89,14 @@ def normalize_url(raw_url: str) -> str:
     return raw_url.split("#")[0]
 
 
-def _npx_command() -> str:
-    """Resolve npx to a concrete path — bare 'npx' fails on Windows (npx.cmd)."""
-    resolved = shutil.which("npx")
-    if resolved:
-        return resolved
-    return "npx.cmd" if sys.platform == "win32" else "npx"
+def _mcp_server_command() -> tuple[str, list[str]]:
+    """Prefer a pre-installed mongodb-mcp-server binary (baked into the Docker
+    image); fall back to npx locally. Bare 'npx' fails on Windows (npx.cmd)."""
+    direct = shutil.which("mongodb-mcp-server")
+    if direct:
+        return direct, []
+    npx = shutil.which("npx") or ("npx.cmd" if sys.platform == "win32" else "npx")
+    return npx, ["-y", "mongodb-mcp-server@latest"]
 
 
 def build_agent() -> LlmAgent:
@@ -102,11 +104,12 @@ def build_agent() -> LlmAgent:
     if not connection_string:
         raise RuntimeError("MDB_MCP_CONNECTION_STRING is not set")
 
+    command, base_args = _mcp_server_command()
     mongodb_toolset = McpToolset(
         connection_params=StdioConnectionParams(
             server_params=StdioServerParameters(
-                command=_npx_command(),
-                args=["-y", "mongodb-mcp-server@latest", "--telemetry", "disabled"],
+                command=command,
+                args=[*base_args, "--telemetry", "disabled"],
                 env={
                     "MDB_MCP_CONNECTION_STRING": connection_string,
                     # npx needs PATH to find node
