@@ -41,8 +41,22 @@ app.add_middleware(
 )
 
 
-@app.get("/healthz")
-async def healthz():
+@app.get("/")
+async def root():
+    return {
+        "service": "RealSight",
+        "description": "AI-generated-video detection agent — Google ADK + Gemini "
+        "with a MongoDB Atlas cache via the official MongoDB MCP Server.",
+        "endpoints": {"health": "/health", "analyze": "POST /analyze", "docs": "/docs"},
+        "repo": "https://github.com/ikathuria/RealSight",
+    }
+
+
+# NOTE: not /healthz — Google Front End reserves that path on run.app and
+# returns its own 404 without ever forwarding to the container.
+@app.get("/health")
+@app.get("/healthz")  # still works locally
+async def health():
     return {"status": "ok", "agent_ready": app.state.runner is not None}
 
 
@@ -55,13 +69,30 @@ async def analyze(request: AnalyzeRequest):
                 verdict="error", reasons=["agent not configured (check env vars)"]
             ).model_dump(),
         )
+    import time
+
+    start = time.perf_counter()
     try:
         from .agent import run_detection
 
         result = await run_detection(app.state.runner, request.url, request.frames)
+        logger.info(
+            "analyze url=%s frames=%d verdict=%s confidence=%s cached=%s elapsed=%.2fs",
+            request.url,
+            len(request.frames),
+            result["verdict"],
+            result["confidence"],
+            result["cached"],
+            time.perf_counter() - start,
+        )
         return AnalyzeResponse(**result)
     except Exception:
-        logger.exception("analysis failed for %s", request.url)
+        logger.exception(
+            "analyze FAILED url=%s frames=%d elapsed=%.2fs",
+            request.url,
+            len(request.frames),
+            time.perf_counter() - start,
+        )
         return JSONResponse(
             status_code=502,
             content=AnalyzeResponse(verdict="error", reasons=["analysis failed"]).model_dump(),
